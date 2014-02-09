@@ -2,17 +2,17 @@ module.exports = function(audioContext){
   var node = Object.create(proto)
   node._targets = []
   node.context = audioContext
+  node.attack = 0
+  node.decay = 0
+  node.value = 1
+  node.sustain = 1
+  node.release = 0
+  node.startValue = 0
+  node.endValue = 0
   return node
 }
 
 var proto = {
-
-  attack: 0,
-  decay: 0,
-  sustain: 1,
-  release: 0,
-  startValue: 0,
-  endValue: 0,
 
   sustainFrom: null,
 
@@ -22,13 +22,16 @@ var proto = {
     var targets = this._targets
     for (var i=0;i<targets.length;i++){
       var target = targets[i]
-      var value = target.value
-      var sustain = value * this.sustain
+      var sustain = this.value * this.sustain
+
+      target.cancelScheduledValues(at)
 
       if (this.attack){
         target.setValueAtTime(this.startValue, at)
-        var curve = getAttackCurve(this.startValue, this.attack, value, this.context.sampleRate)
+        var curve = getAttackCurve(this.startValue, this.attack, this.value, this.context.sampleRate)
         target.setValueCurveAtTime(curve, at, curve.length / this.context.sampleRate)
+      } else {
+        target.setValueAtTime(this.value, at)
       }
 
       if (this.decay){
@@ -57,7 +60,13 @@ var proto = {
     }
   },
   disconnect: function(){
-    this._targets.length = 0
+    var targets = this._targets
+    for (var i=0;i<targets.length;i++){
+      var target = targets[i]
+      target.cancelScheduledValues(this.context.currentTime)
+      target.setValueAtTime(this.value, this.context.currentTime)
+    }
+    targets.length = 0
   },
   destroy: function(){
     this.disconnect()
