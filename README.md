@@ -35,9 +35,13 @@ Decimal representing what multiple of initial value to hold at in sustain portio
 
 Release time in seconds.
 
+### node.value (get/set)
+
+The target value of the attack portion of envelope.
+
 ### node.startValue (get/set)
 
-The start value which will ramp to the initial AudioParam value over time specified by `node.attack`. Defaults to 0.
+The start value which will ramp to `node.value` over time specified by `node.attack`. Defaults to 0.
 
 ### node.endValue (get/set)
 
@@ -49,7 +53,7 @@ Connect the modulator to the desired destination audio param.
 
 ### node.disconnect()
 
-Disconnect from any target AudioParams.
+Disconnect from any target AudioParams and reset to `node.value`.
 
 ### node.start(at)
 
