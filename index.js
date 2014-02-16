@@ -14,8 +14,6 @@ module.exports = function(audioContext){
 
 var proto = {
 
-  sustainFrom: null,
-
   start: function(at){
     var decayFrom = this._decayFrom = at+this.attack
 

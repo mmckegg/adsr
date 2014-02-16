@@ -6,7 +6,7 @@ Attack, decay, sustain, release envelope for automating Web Audio API AudioParam
 ## Install
 
 ```bash
-$ npm install audio-slot
+$ npm install adsr
 ```
 
 ## API
