@@ -15,8 +15,8 @@ module.exports = function(audioContext){
 var proto = {
 
   start: function(at){
-    var decayFrom = this._decayFrom = at+this.attack
-
+    this._decayFrom = this._decayFrom = at+this.attack
+    this._startedAt = at
     var targets = this._targets
     for (var i=0;i<targets.length;i++){
       var target = targets[i]
@@ -26,14 +26,13 @@ var proto = {
 
       if (this.attack){
         target.setValueAtTime(this.startValue, at)
-        var curve = getAttackCurve(this.startValue, this.attack, this.value, this.context.sampleRate)
-        target.setValueCurveAtTime(curve, at, curve.length / this.context.sampleRate)
+        target.linearRampToValueAtTime(this.value, at + this.attack)
       } else {
         target.setValueAtTime(this.value, at)
       }
 
       if (this.decay){
-        target.setTargetAtTime(sustain, decayFrom, getTimeConstant(this.decay))
+        target.setTargetAtTime(sustain, this._decayFrom, getTimeConstant(this.decay))
       }
     }
   },
@@ -46,7 +45,16 @@ var proto = {
       var targets = this._targets
       for (var i=0;i<targets.length;i++){
         var target = targets[i]
+
         target.cancelScheduledValues(at)
+
+        // truncate attack (required as linearRamp is removed by cancelScheduledValues)
+        if (this.attack && at < this._decayFrom){
+          var valueAtTime = getValue(this.startValue, this.value, this._startedAt, this._decayFrom, at)
+          target.linearRampToValueAtTime(valueAtTime, at)
+        }
+
+
         target.setTargetAtTime(this.endValue, at, getTimeConstant(this.release))
       }
     }
@@ -75,19 +83,10 @@ function getTimeConstant(time){
   return Math.log(time+1)/Math.log(100)
 }
 
-function getAttackCurve(from, attack, value, sampleRate){
-  var length = attack * sampleRate
-
-  var attackStep = attack ? (value - from) / (attack * sampleRate) : 0
-  //var decayStep = decay ? (sustain - value) / (decay * sampleRate) : 0
-
-  var attackSteps = attack * sampleRate
-
-  if (length){
-    var result = new Float32Array(length)
-    for (var i=0;i<length;i++){
-      result[i] = i * attackStep
-    }
-    return result
-  }
+function getValue(start, end, fromTime, toTime, at){
+  var difference = end - start
+  var time = toTime - fromTime
+  var truncateTime = at - fromTime
+  var phase = truncateTime / time
+  return start + phase * difference
 }
