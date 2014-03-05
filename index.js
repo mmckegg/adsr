@@ -1,18 +1,25 @@
-module.exports = function(audioContext){
-  var node = Object.create(proto)
-  node._targets = []
-  node.context = audioContext
-  node.attack = 0
-  node.decay = 0
-  node.value = 1
-  node.sustain = 1
-  node.release = 0
-  node.startValue = 0
-  node.endValue = 0
-  return node
+module.exports = ADSR
+
+function ADSR(audioContext){
+
+  if (!(this instanceof ADSR)){
+    return new ADSR(audioContext)
+  }
+
+  this._targets = []
+  this.context = audioContext
+  this.attack = 0
+  this.decay = 0
+  this.value = 1
+  this.sustain = 1
+  this.release = 0
+  this.startValue = 0
+  this.endValue = 0
 }
 
-var proto = {
+ADSR.prototype = {
+
+  constructor: ADSR,
 
   start: function(at){
     this._decayFrom = this._decayFrom = at+this.attack
