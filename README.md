@@ -65,10 +65,6 @@ Specify the time to start the release portion of the envelope. Or if `isTarget =
 
 Returns the time that the release portion will complete by (this can be used to decide when to stop the source AudioNode)
 
-### node.destroy()
-
-Immediately disconnect from target AudioParam and clean up any state.
-
 ## Example
 
 ```js

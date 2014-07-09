@@ -80,9 +80,6 @@ ADSR.prototype = {
       target.setValueAtTime(this.value, this.context.currentTime)
     }
     targets.length = 0
-  },
-  destroy: function(){
-    this.disconnect()
   }
 }
 
