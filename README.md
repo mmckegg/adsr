@@ -68,7 +68,7 @@ Returns the time that the release portion will complete by (this can be used to 
 ## Example
 
 ```js
-var audioContext = new webkitAudioContext()
+var audioContext = new AudioContext()
 var oscillator = audioContext.createOscillator()
 var gain = audioContext.createGain()
 
