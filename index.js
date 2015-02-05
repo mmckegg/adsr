@@ -1,41 +1,72 @@
 module.exports = ADSR
 
 function ADSR(audioContext){
+  var node = audioContext.createGain()
 
-  if (!(this instanceof ADSR)){
-    return new ADSR(audioContext)
-  }
+  var voltage = node._voltage = getVoltage(audioContext)
+  var value = scale(voltage)
+  var startValue = scale(voltage)
+  var endValue = scale(voltage)
 
-  this._targets = []
-  this.context = audioContext
-  this.attack = 0
-  this.decay = 0
-  this.value = 1
-  this.sustain = 1
-  this.release = 0
-  this.startValue = 0
-  this.endValue = 0
+  node._startAmount = scale(startValue)
+  node._endAmount = scale(endValue)
+
+  node._multiplier = scale(value)
+  node._multiplier.connect(node)
+  node._startAmount.connect(node)
+  node._endAmount.connect(node)
+
+  node.value = value.gain
+  node.startValue = startValue.gain
+  node.endValue = endValue.gain
+
+  node.startValue.value = 0
+  node.endValue.value = 0
+
+  Object.defineProperties(node, props)
+  return node
 }
 
-ADSR.prototype = {
+var props = {
 
-  constructor: ADSR,
+  attack: { value: 0, writable: true },
+  decay: { value: 0, writable: true },
+  sustain: { value: 1, writable: true },
+  release: {value: 0, writable: true },
 
-  start: function(at){
-    this._decayFrom = this._decayFrom = at+this.attack
-    this._startedAt = at
-    var targets = this._targets
-    for (var i=0;i<targets.length;i++){
-      var target = targets[i]
-      var sustain = this.value * this.sustain
+  getReleaseDuration: {
+    value: function(){
+      return this.release
+    }
+  },
+
+  start: {
+    value: function(at){
+      var target = this._multiplier.gain
+      var startAmount = this._startAmount.gain
+      var endAmount = this._endAmount.gain
+
+      this._voltage.start(at)
+      this._decayFrom = this._decayFrom = at+this.attack
+      this._startedAt = at
+
+      var sustain = this.sustain
 
       target.cancelScheduledValues(at)
+      startAmount.cancelScheduledValues(at)
+      endAmount.cancelScheduledValues(at)
+
+      endAmount.setValueAtTime(0, at)
 
       if (this.attack){
-        target.setValueAtTime(this.startValue, at)
-        target.linearRampToValueAtTime(this.value, at + this.attack)
+        target.setValueAtTime(0, at)
+        target.linearRampToValueAtTime(1, at + this.attack)
+
+        startAmount.setValueAtTime(1, at)
+        startAmount.linearRampToValueAtTime(0, at + this.attack)
       } else {
-        target.setValueAtTime(this.value, at)
+        target.setValueAtTime(1, at)
+        startAmount.setValueAtTime(0, at)
       }
 
       if (this.decay){
@@ -43,44 +74,68 @@ ADSR.prototype = {
       }
     }
   },
-  stop: function(at, isTarget){
-    if (isTarget){
-      at = at - this.release
-    }
-    var endTime = at + this.release
-    if (this.release){
-      var targets = this._targets
-      for (var i=0;i<targets.length;i++){
-        var target = targets[i]
+
+  stop: {
+    value: function(at, isTarget){
+      if (isTarget){
+        at = at - this.release
+      }
+
+      var endTime = at + this.release
+      if (this.release){
+
+        var target = this._multiplier.gain
+        var startAmount = this._startAmount.gain
+        var endAmount = this._endAmount.gain
 
         target.cancelScheduledValues(at)
+        startAmount.cancelScheduledValues(at)
+        endAmount.cancelScheduledValues(at)
+
+        var expFalloff = getTimeConstant(this.release)
 
         // truncate attack (required as linearRamp is removed by cancelScheduledValues)
         if (this.attack && at < this._decayFrom){
-          var valueAtTime = getValue(this.startValue, this.value, this._startedAt, this._decayFrom, at)
+          var valueAtTime = getValue(0, 1, this._startedAt, this._decayFrom, at)
           target.linearRampToValueAtTime(valueAtTime, at)
+          startAmount.linearRampToValueAtTime(1-valueAtTime, at)
+          startAmount.setTargetAtTime(0, at, expFalloff)
         }
 
-
-        target.setTargetAtTime(this.endValue, at, getTimeConstant(this.release))
+        endAmount.setTargetAtTime(1, at, expFalloff)
+        target.setTargetAtTime(0, at, expFalloff)
       }
-    }
-    return endTime
-  },
-  connect: function(param){
-    if (!~this._targets.indexOf(param)){
-      this._targets.push(param)
+
+      this._voltage.stop(endTime)
+      return endTime
     }
   },
-  disconnect: function(){
-    var targets = this._targets
-    for (var i=0;i<targets.length;i++){
-      var target = targets[i]
-      target.cancelScheduledValues(this.context.currentTime)
-      target.setValueAtTime(this.value, this.context.currentTime)
+
+  onended: {
+    get: function(){
+      return this._voltage.onended
+    },
+    set: function(value){
+      this._voltage.onended = value
     }
-    targets.length = 0
   }
+
+}
+
+var flat = new Float32Array([1,1])
+function getVoltage(context){
+  var voltage = context.createBufferSource()
+  var buffer = context.createBuffer(1, 2, context.sampleRate)
+  buffer.getChannelData(0).set(flat)
+  voltage.buffer = buffer
+  voltage.loop = true
+  return voltage
+}
+
+function scale(node){
+  var gain = node.context.createGain()
+  node.connect(gain)
+  return gain
 }
 
 function getTimeConstant(time){

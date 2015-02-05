@@ -17,8 +17,8 @@ function getAdsr(){
   adsr.decay = parseFloat(decay.value)
   adsr.sustain = parseFloat(sustain.value)
   adsr.release = parseFloat(release.value)
-  adsr.startValue = parseFloat(startValue.value)
-  adsr.endValue = parseFloat(endValue.value)
+  adsr.startValue.value = parseFloat(startValue.value)
+  adsr.endValue.value = parseFloat(endValue.value)
   return adsr
 }
 
@@ -28,7 +28,10 @@ addButton('trigger 1s', function(){
   var gain = audioContext.createGain()
   osc.connect(gain)
   gain.connect(audioContext.destination)
+
+  gain.gain.value = 0
   adsr.connect(gain.gain)
+  
   osc.start(audioContext.currentTime)
   adsr.start(audioContext.currentTime)
   var endTime = adsr.stop(audioContext.currentTime+1)
@@ -43,6 +46,8 @@ addButton('trigger hold', function(){
   var gain = audioContext.createGain()
   osc.connect(gain)
   gain.connect(audioContext.destination)
+
+  gain.gain.value = 0
   adsr.connect(gain.gain)
   osc.start(audioContext.currentTime)
   adsr.start(audioContext.currentTime)

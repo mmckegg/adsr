@@ -35,15 +35,15 @@ Decimal representing what multiple of initial value to hold at in sustain portio
 
 Release time in seconds.
 
-### node.value (get/set)
+### node.value ([AudioParam](https://developer.mozilla.org/en-US/docs/Web/API/AudioParam))
 
-The target value of the attack portion of envelope.
+The target value of the attack portion of envelope. Defaults to 1.
 
-### node.startValue (get/set)
+### node.startValue (AudioParam)
 
 The start value which will ramp to `node.value` over time specified by `node.attack`. Defaults to 0.
 
-### node.endValue (get/set)
+### node.endValue (AudioParam)
 
 The final value which will be ramped to over time specified by `node.release`. Defaults to 0.
 
@@ -58,6 +58,8 @@ Disconnect from any target AudioParams and reset to `node.value`.
 ### node.start(at)
 
 Trigger the attack-decay-sustain portion of the envelope at the specified time relative to audioContext.currentTime.
+
+This can only be called once. Create additional instances of ADSR for multiple events.
 
 ### node.stop(at, isTarget)
 
@@ -76,12 +78,16 @@ oscillator.connect(gain)
 gain.connect(audioContext.destination)
 
 var envelopeModulator = ADSR(audioContext)
+
+gain.gain.value = 0 // set base value to 0 as modulators add to existing value
 envelopeModulator.connect(gain.gain)
 
 envelopeModulator.attack = 0.01 // seconds
 envelopeModulator.decay = 0.4 // seconds
 envelopeModulator.sustain = 0.6 // multiply gain.gain.value
 envelopeModulator.release = 0.4 // seconds
+
+envelopeModulator.value.value = 2 // value is an AudioParam
 
 envelopeModulator.start(audioContext.currentTime)
 oscillator.start(audioContext.currentTime)
