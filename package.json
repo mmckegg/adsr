@@ -1,6 +1,6 @@
 {
   "name": "adsr",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Attack, decay, sustain, release envelope for automating Web Audio API AudioParams.",
   "main": "index.js",
   "scripts": {
