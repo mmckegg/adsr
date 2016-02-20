@@ -147,5 +147,14 @@ function getValue(start, end, fromTime, toTime, at){
   var time = toTime - fromTime
   var truncateTime = at - fromTime
   var phase = truncateTime / time
-  return start + phase * difference
+  var value = start + phase * difference
+
+  if (value <= start) {
+      value = start
+  }
+  if (value >= end) {
+      value = end
+  }
+
+  return value
 }
