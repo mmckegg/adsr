@@ -31,7 +31,7 @@ addButton('trigger 1s', function(){
 
   gain.gain.value = 0
   adsr.connect(gain.gain)
-  
+
   osc.start(audioContext.currentTime)
   adsr.start(audioContext.currentTime)
   var endTime = adsr.stop(audioContext.currentTime+1)
@@ -85,7 +85,7 @@ function addSlider(property, defaultValue, step, min, max){
     slider.step = step
   }
 
-  slider.onchange = function(){
+  slider.oninput = function(){
     label.data = this.value
   }
 
