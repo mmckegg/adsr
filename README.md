@@ -3,6 +3,10 @@ adsr
 
 Attack, decay, sustain, release envelope for automating Web Audio API AudioParams.
 
+## Status: Unmaintained
+
+Check out https://github.com/itsjoesullivan/envelope-generator, which is a much better implementation :)
+
 ## Install
 
 ```bash
